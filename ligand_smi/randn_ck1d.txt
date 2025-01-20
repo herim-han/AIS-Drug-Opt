@@ -1,0 +1,5 @@
+Cn1cc(-c2ccnc3[nH]ccc23)c(-c2ccc(OC(F)F)nc2)n1
+NC(=O)c1c(-c2cccc(F)c2)nn2c1CN(C(=O)Nc1ccc3c(c1)OC(F)(F)O3)CC2
+C[C@H]1Cn2nc(-c3ccc(F)c(Cl)c3)c(C(N)=O)c2CN1C(=O)Nc1ccc(C#N)cc1
+Cc1nocc1C(=O)Nc1cn2nc(-c3c(-c4ccc(F)cc4)nc4ccccn34)ccc2n1
+Cn1cc(-c2ccc3nc(NC(=O)CC(F)(F)F)cn3n2)c(-c2ccc(F)cc2)n1

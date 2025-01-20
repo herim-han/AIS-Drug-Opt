@@ -1,0 +1,18 @@
+{
+    "5ht1b": {
+        "targetfile": "5ht1b_receptor.pdbqt",
+        "pocket_param": [-21.017, 10.272, 21.800, 25.0, 25.0, 25.0]
+    },
+    "pdk4":  {
+        "targetfile": "pdk4_receptor.pdbqt",
+        "pocket_param": [-52.841, 6.489, 29.496, 25.0, 25.0, 25.0]
+    },
+    "parp1": {
+        "targetfile": "parp1_receptor.pdbqt",
+        "pocket_param": [24.944, 15.989,  22.339, 25.0, 25.0, 25.0]
+    },
+    "ck1d": {
+        "targetfile": "ck1d_receptor.pdbqt",
+        "pocket_param": [-22.006,-2.630,38.979, 25.0, 25.0, 25.0]
+    }
+}
