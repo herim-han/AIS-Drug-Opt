@@ -1,0 +1,5 @@
+O=C(N1CCN(CC1)C(=O)c1cc(ccc1F)Cc1n[nH]c(=O)c2c1cccc2)C1CC1
+CNCc1ccc(cc1)c1[nH]c2c3c1CCNC(=O)c3cc(c2)F
+NC(=O)c1cccc2c1nn(c2)c1ccc(cc1)C1CCCNC1
+COc1cc(OCc2cccc(c2C)c2ccccc2)cc(c1CN1CCCCC1C(=O)O)OC
+Fc1ccc(cc1)C1Nc2cc(F)cc3c2c(C1c1ncnn1C)n[nH]c3=O
