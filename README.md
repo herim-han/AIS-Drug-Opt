@@ -18,8 +18,7 @@ This is molecular structure generation using SMI+AIS(100) tokens based on Pytorc
  ```
 or just use 'env.yml' to create the conda environment.
 ```
-conda env create --file cpu_env.yml
-conda env create --file gpu_env.yml
+conda env create --file env.yml
 ```
 
 ## Download for Checkpoint File and Source Data
