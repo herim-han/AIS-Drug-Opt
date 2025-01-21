@@ -1,1 +1,5 @@
 ligand_smi/bk
+optimize.py
+cpu_env.yml
+gpu_env.yml
+models_from_gdown
