@@ -3,3 +3,4 @@ optimize.py
 cpu_env.yml
 gpu_env.yml
 models_from_gdown
+models/ais_100_cvae.ckpt
