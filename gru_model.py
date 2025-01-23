@@ -24,15 +24,11 @@ class MyModel(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         src, trg, prop = batch
         src_inp, mu, logvar, properties = self.encoder(src, src ==pad_id , prop)
-        #print('mu in training step', mu.shape)
         loss2 = self.kl_loss(mu, logvar)
 
         feature = self.decoder.sampling(mu, logvar)
-        print(feature.shape)
         feature = torch.cat((feature, properties), 1)
-        print('!!!!!!!!! feature', feature.shape)
         output = self.decoder( src_inp, feature )
-        print('!!!!!!!!! outpur', output.shape)
 
         loss1 = self.loss_f(output[:,:-1].reshape(-1, output.size(-1)) , trg[:,1:].reshape(-1) )
         loss = loss1+loss2
@@ -61,18 +57,15 @@ class MyModel(pl.LightningModule):
         
         trg = trg*torch.cumprod( trg!=eos_id, dim=-1)
         val_tokens = val_tokens*torch.cumprod( val_tokens !=eos_id, dim=-1)
-        print(torch.all(trg == val_tokens, dim=-1))
         acc = torch.all(trg == val_tokens, dim=-1).sum() / src.size(0)
 
         self.log( "valid_acc", acc, on_step=False, on_epoch=True, prog_bar=True, logger=True, batch_size = src.size(0), sync_dist=True )
 
     def predict_step(self, batch, batch_idx):
-        print('!!!!!!!!!!!!  MyModel.predict_step')
         feature = batch[0]
 
         mu, logvar = torch.split(feature, feature.size(-1)//2, dim=-1 )
         feature = self.decoder.sampling(mu, logvar)
-        print('!!!!!!!!!!! feature in predict_step', feature.shape)
 
         mw_mean = torch.tensor([372.53]).to(feature.device)
         mw_std = torch.tensor([88.89]).to(feature.device)
@@ -83,7 +76,6 @@ class MyModel(pl.LightningModule):
         return self.generate_tokens(feature)
 
     def generate_tokens(self, feature, seq_len=0):
-        print('!!!!!!!!!! MyModel.generate_tokens')
         if len(feature.size())==2:
             feature = feature.unsqueeze(0).repeat(self.n_layer, 1, 1)
         elif len(feature.size())==3:
@@ -132,7 +124,6 @@ class Encoder(pl.LightningModule):
         
         mu     = self.readout1(torch.cat((e_output[:,0], properties), 1))
         logvar = self.readout2(torch.cat((e_output[:,0], properties), 1))
-        print('Encoder, mu/std', mu.shape)
         return src_inp, mu, logvar, properties # (B, n_layer, d_model)
 
     def predict_step(self, batch, batch_idx):
@@ -153,7 +144,6 @@ class Decoder(pl.LightningModule):
         self.n_layer = n_layer
 
     def forward(self, src_inp, feature):
-        print('!!!!!!!!!!! MyModel.decoder.forward')
         if len(feature.size())==2:
             feature = feature.unsqueeze(0).repeat(self.n_layer, 1, 1)
         elif len(feature.size())==3:
@@ -161,9 +151,7 @@ class Decoder(pl.LightningModule):
         else:
             assert RuntimeError ('Size of feature should be (batch_size, d_model) or (n_layer, batch_size, d_model) ') 
         d_output, _ = self.decoder(src_inp, feature) # (B, L, d_model+1)
-        print('decoder GRU output', d_output.shape)
         output = self.softmax( self.output_linear(d_output) ) # (B, L, d_model+1) => # (B, L, trg_vocab_size)
-        print('output', output.shape)
         return output
 
     def decode_single(self, src_inp, feature ):
@@ -171,10 +159,7 @@ class Decoder(pl.LightningModule):
         assert feature.size(0) == self.n_layer
 
         d_output = self.decoder(src_inp, feature)[0] # (B, L, d_model)
-#        print('!!!!!!!!decoder', d_output.shape)
-#        print('!!!!output_linear', self.output_linear(d_output).shape)
         d_output =self.softmax( self.output_linear(d_output[:,-1]) ) # (B, d_model) => # (B, trg_vocab_size) 
-#        print('!!!!!!!!softmax', d_output.shape)
         return d_output
 
     def sampling(self, mu, log_var):
