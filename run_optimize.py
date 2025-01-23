@@ -74,39 +74,11 @@ def optimize(args, initial_smi, obj_func = lambda docking, SA: -docking-0.5*SA*S
 
         device = torch.device('cuda') if torch.cuda.is_available()==True else torch.device('cpu')
         model = MyModel.load_from_checkpoint(args.ckpt_path, strict=False, map_location=device)
-        print('device', device)
         trainer = Trainer(accelerator=args.accelerator, 
                           devices    =args.devices, 
                           strategy   =args.strategy,
                           max_epochs =args.max_epochs,
                          )
-        print('model loaded: ', model.device)
-        print('torch.cuda.is_available ', torch.cuda.is_available() )
-#        ckpt = torch.load(args.ckpt_path, map_location=model.device)
-#
-###################revised code
-#        from collections import OrderedDict
-#        
-#        pretrained_dict = ckpt['state_dict']
-#        new_model_dict = model.state_dict()
-#        pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in new_model_dict}
-#        new_model_dict.update(pretrained_dict)
-#        model.load_state_dict(new_model_dict)
-    
-#        for name, param in ckpt['state_dict'].items():
-#            #print(name)
-#            if name not in model.state_dict().keys():
-#                continue
-#            if isinstance(param, torch.nn.parameter.Parameter):
-#                param = param.data
-#            try:
-#                model.state_dict()[name].copy_(param)
-#                #print(model.state_dict()[name].copy_(param).size())
-#                #print(name, '\n ', ' copied!!!')
-#            except:
-#                print(name, ' none copied!')
-#                continue
-
 
     with timer('Initial Tokens') :
         initial_tokens =[
@@ -117,7 +89,8 @@ def optimize(args, initial_smi, obj_func = lambda docking, SA: -docking-0.5*SA*S
         print('encoding ais:\n', initial_tokens)
         initial_tokens = [ sp.encode_as_ids( s ) for s in initial_tokens ]
         print(initial_tokens)
-        
+
+#Fine-tuning service
 #    with timer('Fine Tuning'):
 #        from pytorch_lightning.callbacks import ModelCheckpoint, TQDMProgressBar
 #
@@ -160,7 +133,6 @@ def optimize(args, initial_smi, obj_func = lambda docking, SA: -docking-0.5*SA*S
         model.encoder.positional_encoder = PositionalEncoder(args.seq_len, model.encoder.positional_encoder.d_model)
         initial_feature = trainer.predict(model.encoder, dataloaders=get_encoder_dataloader(initial_tokens, initial_smi,args.batch_size) )#Encoder.predict_step
         initial_feature = torch.cat(initial_feature) #1024
-#        print('Feature size (Compressed dim): ', initial_feature.size())
 
     device, dtype = initial_feature.device, initial_feature.dtype
     feature_size = initial_feature.size(-1)
@@ -180,7 +152,7 @@ def optimize(args, initial_smi, obj_func = lambda docking, SA: -docking-0.5*SA*S
 
     print("initial docking: ", initial_docking)        
     print("initial SA: ", initial_SA)
-    print("initial obj:", dict_output[0]['obj_val' ] )
+
     dict_output = {0: { "tokens": initial_tokens, 
                         "smi": initial_smi, 
                         "feature": initial_feature, 
@@ -190,22 +162,20 @@ def optimize(args, initial_smi, obj_func = lambda docking, SA: -docking-0.5*SA*S
                        }
                   }
 
+    print("initial obj:", dict_output[0]['obj_val' ] )
+
     all_feature = initial_feature #initialize feature tensor
     obj_val     = torch.tensor([ obj_func(docking,SA) for docking, SA in zip(initial_docking, initial_SA) ], device=device, dtype=dtype)
     for i_iter in range(1, args.opt_iter+1):
         print(f"{i_iter}  ---------------------- optimization input")
         if args.opt_method == 'botorch':
             with timer(f'[{i_iter}] Tell'):
-                #feature = torch.cat( [ item["feature"] for key, item in dict_output.items() if item['feature'] is not None ])
-                #obj_val = torch.tensor( sum( [ item["obj_val"] for key, item in dict_output.items() if item['obj_val'] is not None ],[]), device=device, dtype=dtype)
-                #print('!!!!!!!!!!!!!! optimizer feature, val: ', all_feature.size(), obj_val.size() )
                 acqf, bounds = tell( all_feature, obj_val )
         
             with timer(f'[{i_iter}] Ask') :
                 new_feature = ask(args.num_ask, acqf, bounds, 
                                   torch.Tensor([0, args.opt_bound], 
                                                device=device ).unsqueeze(-1).repeat(1, feature_size ) )
-                #print('!!!!!!!!!!!new feature: ', new_feature.size())
         
         with timer(f'[{i_iter}] Decoding') :
             # do decoding
@@ -218,9 +188,7 @@ def optimize(args, initial_smi, obj_func = lambda docking, SA: -docking-0.5*SA*S
         with timer(f'[{i_iter}] Generate String') :
             # get string
             list_smi = [ sp.decode_ids(token.detach().cpu().numpy().tolist()) for token in tokens ]
-            #0430print('decode_ids (AIS+SMI): ', list_smi)
             smi    = [ to_smi(token) for token in list_smi ] if args.tokenize_method == 'ais' else [ sf.decoder(token.replace(" ", "")) for token in list_smi] if args.tokenize_method == 'selfies' else [ token.replace(" ", "") for token in list_smi ]
-        print('!!!!!!!!! decoding generate string', len(smi) )
         total_smi = len(smi)
 
         # validate the generated smi
@@ -238,15 +206,11 @@ def optimize(args, initial_smi, obj_func = lambda docking, SA: -docking-0.5*SA*S
             continue
 
         print(f'num_ask: {args.num_ask}, valid_mol: {len(valid_mol)}')
-        #0430tokens  = tokens[valid_mol] #type(tokens) = tensor
         valid_smi     = [ smi[idx] for idx in valid_mol ] #type(smi) = list
 
-#0430        print(f'New generated smi: , {valid_smi} \n invalid smi: {total_smi - len(valid_smi)}' )
         with timer(f'[{i_iter}] Get Property') :
             valid_smiles, list_docking, list_SA, success_indices, valid_struct_id, failed_smiles = get_property_qvina(valid_smi, n_repeat = args.n_repeat_docking, csv_path = f'{args.csv_path}/tmp', num_smiles = valid_struct_id , target=args.target)
             print('failed docking program', len(valid_mol) - len(success_indices) )
-
-        #print(obj_val, obj_val.size())
 
         if(len(success_indices)==0): 
             dict_output[i_iter] = { "tokens":None, "smi": None, "feature": None, "docking": None, "SA": None, "obj_val": None, "length":0 } 
@@ -267,26 +231,18 @@ def optimize(args, initial_smi, obj_func = lambda docking, SA: -docking-0.5*SA*S
             # do encoding
             feature = trainer.predict(model.encoder, dataloaders=get_encoder_dataloader(tokens, args.batch_size) )
             feature = torch.cat(feature)
-            #print('Encoder.predict token size: ', tokens.size() )
-            #print('valid/success token size: ', tokens[valid_mol][success_indices].size() )
 
         list_score = [ obj_func(docking, SA) for docking, SA in zip(list_docking, list_SA) ]
         valid_idx = valid_mol[success_indices]
         
-        #print(f'valid_idx, score : {len(valid_idx)}, {len(list_score)}, {type(valid_idx)}')
         list_obj_score = [list_score[valid_idx.tolist().index(i)] if i in valid_idx.tolist() else -100 for i in range(args.num_ask)]
 
         #update feature/obj_val for optimizer
         obj_val = torch.cat((obj_val, torch.tensor(list_obj_score) ), dim=0)
         all_feature = torch.cat((all_feature, feature), dim=0 )
-        #print('concat all feature: ', all_feature.size() )
-        print('invalid_idx (obj_val=-100/feature=False): ', invalid_mol)
-        print('obj_val ', obj_val)
-        print('compare feature in all_feature ', (all_feature[:,None] == feature[valid_mol][success_indices]).all(-1).any(-1))
         
         dict_output[i_iter] = { "tokens": tokens[success_indices], "smi": valid_smiles, "feature": feature, 
                                 "docking":list_docking, "SA": list_SA, "obj_val": list_score, "length": len(success_indices) }
-#        print( dict_output[i_iter]['length'], dict_output[i_iter]["smi"], dict_output[i_iter]["obj_val"] )
     
     with timer(f'save result') :   
         with open(f'{args.csv_path}/optimize_result.pkl', 'wb') as f:
@@ -302,46 +258,6 @@ def optimize(args, initial_smi, obj_func = lambda docking, SA: -docking-0.5*SA*S
     with open(f'{args.csv_path}/optimize_result.pkl', 'rb') as f:
         data = pickle.load(f)
     
-#    tmp_smi = []
-#    tmp_dxc = []
-#    tmp_obj = []
-#    tmp_sa = []
-#    tmp_tokens = []
-#    num_smi = 0
-#    for i in range(1, args.opt_iter+1):
-#        try:
-#            num_smi += len(data[i]['smi'])
-#            tmp_smi.append(data[i]["smi"])
-#            tmp_dxc.append(data[i]['docking'])
-#            tmp_sa.append(data[i]['docking'])
-#            tmp_obj.append(data[i]['obj_val'])
-#            tmp_tokens.append(data[i]['tokens'])
-#        except:
-#            continue
-#
-#    list_smi = [item for row in tmp_smi for item in row]
-#    list_dxc = [item for row in tmp_dxc for item in row]
-#    list_sa  = [item for row in tmp_sa for item in row]
-#    list_obj = [item for row in tmp_obj for item in row]
-#    print(len(list_smi), len(list_dxc), len(list_obj), list_smi)
-#    print('total generate smi', num_smi)
-#    print('total uniq smi (remove duplicate)', len(list_smi))
-#    zinc_DB = [line.strip() for line in open("can_zinc", 'r')]
-#    binding_DB = [line.strip() for line in open("ocan_pdk4_ligand.txt", 'r')]
-#    print("novel smiles (not in zinc/bindingDB)", len(list(filter(lambda s: not(s in zinc_DB) and not(s in binding_DB), list_smi))))
-#
-#    i=0
-#    for tokens in torch.cat(tmp_tokens):
-#        t = tokens[1==(tokens!=2).int().cumprod(0)]
-#        _, counts = torch.unique_consecutive(t, return_counts=True)
-#        if torch.any(counts >10):
-#            i+=1
-#
-#    print('torch consecutive counts > 10', i)
-#    for i in [3, 5, 10]:
-#        list_sort_obj = sorted(list_obj, reverse=True)[:i]
-#        print(f'top-{i} min/max/mean {round(min(list_sort_obj),3)}, {round(max(list_sort_obj),3)}, {round(sum(list_sort_obj)/len(list_sort_obj),3)}')
-
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--ckpt_path', help="dataset path", type=str, default = None)
@@ -391,6 +307,7 @@ if __name__=='__main__':
     import os
     if not os.path.isdir(args.csv_path):
         os.mkdir(args.csv_path)
+
     #load initial smiles
     if args.input_file.endswith('.csv'):
         initial_smi = pd.read_csv(args.input_file)['smiles'].tolist()
