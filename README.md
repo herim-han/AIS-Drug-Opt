@@ -11,8 +11,8 @@ rdkit
 sentencepiece
 botorch
 ```
+For the other packages, please refer to the `*.yml`. To resolve  `PackageNotFoundError`, please add the following channels before creating the environment. 
 
- * For the other packages, please refer to the `*.yml`. To resolve  `PackageNotFoundError`, please add the following channels before creating the environment. 
 ```bash
 conda config --add channels pytorch
 conda config --add channels rdkit
@@ -24,17 +24,17 @@ conda env create --file env.yml
 ```
 
 ## Download for Checkpoint File and Source Data
-#### Optional 1. To install models and source data, git lfs is needed.
+**Optional 1.** Using git lfs to install models and source data:
 ```
 git lfs install
 git lfs pull
 ```
 
-#### Optional 2. You can download the pretrained models used in paper. 
+**Optional 2.** Download link:
    - [ckpt_files<sub>](https://docs.google.com/uc?export=download&id=1FINro8crgOSS0XpSwWRGMCqHGR5fRVnA) 
    - [src_data<sub>](https://docs.google.com/uc?export=download&id=1yHiIs6K3ndoA5cznSgp0ycZnEbFKFKjQ)
 
-#### Optional 3. It will be downloaded to use 'gdown'.
+**Optional 3.** Using gdown to install models and source data:
 ```
 gdown https://drive.google.com/uc?id=1FINro8crgOSS0XpSwWRGMCqHGR5fRVnA
 gdown https://drive.google.com/uc?id=1yHiIs6K3ndoA5cznSgp0ycZnEbFKFKjQ
@@ -45,11 +45,11 @@ gdown https://drive.google.com/uc?id=1yHiIs6K3ndoA5cznSgp0ycZnEbFKFKjQ
 ```
 export BASEDIR=path/to/AIS-Drug-Opt/simulation
 ```
-**When you apply it to other targets:**
+#### When you apply it to other targets:
 Prepare .pdbqt for the apo-protein and modify the binding pocket in `input.json`.
 
 ## Run
-#### run optimize from pre-trained model:
+### Run optimize from pre-trained model:
 ```
 python  run_optimize.py  --sp_model ./data/sp/ais_vocab_100.model \
                          --ckpt_path ./models/ais_100_cvae.ckpt \
@@ -74,7 +74,7 @@ python  run_optimize.py  --sp_model ./data/sp/ais_vocab_100.model \
 > `--init_num`: Number of initial compounds.
 > `--input_file`: Path to the input file containing ligand SMILES. (.txt or .csv files)
 
-#### fine-tuning using inital smiles:
+### Fine-tuning using inital smiles:
 ```
 python  run_optimize.py  --sp_model ./data/sp/ais_vocab_100.model \
                          --ckpt_path ./models/ais_100_cvae.ckpt \
@@ -95,7 +95,7 @@ python  run_optimize.py  --sp_model ./data/sp/ais_vocab_100.model \
 
 The fine-tuned model will be saved at Fine-tuning/
  
-#### Training model:
+### Training model:
 ```
 python train_gru.py  --sp_model data/sp/ais_vocab_100.model \
                      --max_epochs 300 \
