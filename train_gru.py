@@ -2,72 +2,48 @@ import os
 import argparse 
 import re 
 import pickle
-
 import sentencepiece as spm
 from tqdm import trange, tqdm
-
-import torch 
+import torch
 from torch import nn
 import torch.distributed as dist
 from torch.utils.data.distributed import DistributedSampler 
 from torch.nn.parallel import DistributedDataParallel
 import torch.optim as optim
 from torch.utils.data import DataLoader 
+import sys
 torch.set_float32_matmul_precision('medium')
-
+sys.path.append(os.path.join(os.path.dirname(__file__), 'utils'))
+import numpy as np
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint
-
-from data import pad_id, sos_id, eos_id, unk_id
-from data import CustomDataset
+from data import pad_id, sos_id, eos_id, unk_id, CustomDataset
 from gru_model import MyModel
 from rdkit.Chem import MolFromSmiles, MolToSmiles, CanonSmiles, QED
+from elem_ais import encode as to_ais
+from elem_ais import decode as to_smi
+from elem_ais import smiles_tokenizer 
+import selfies as sf
         
 def train(args):
     sp = spm.SentencePieceProcessor(model_file=f"{args.sp_model}")
     vocab_size = sp.GetPieceSize()
     print('vocab_size loaded from sp model: ', vocab_size) 
+    list_smi = open(args.filename).readlines() 
+    list_tokens=[]
+    for line in tqdm(list_smi, desc='loading data'):#list
+        tmp_line = ( to_ais(line, args.sp_model) if args.tokenize_method == 'ais' 
+               else " ".join(smiles_tokenizer(sf.encoder(line))) if args.tokenize_method=='selfies' 
+               else " ".join(smiles_tokenizer(line))  )
+        list_tokens.append( [ sp.Encode(token.strip())[0] for token in re.split("\s+", tmp_line.strip()) ] )
+    train_dataset, valid_dataset = torch.utils.data.random_split(list_tokens, [ int(args.train_ratio*len(list_tokens)), len(list_tokens)-int(args.train_ratio*len(list_tokens)) ] )
 
-    if args.train_dat is None:
-        with open(args.train_filename) as f:
-            lines = f.readlines()
-        list_smi = lines[:int(len(lines)*args.train_ratio)]
-        list_tokens=[]
-        for line in tqdm(list_smi, desc='loading data'):#list
-            list_tokens.append( [ sp.EncodeAsIds(token.strip())[0] for token in re.split("\s+", line.strip()) ] )
-
-    else:
-        # load train dataset
-        print(f'loading train data from {args.train_dat}')
-        with open(args.train_dat, 'rb') as f:
-            list_tokens = pickle.load(f)
-
-    
-    train_dataset = CustomDataset(list_tokens, args.masking_ratio)
-    #train_dataset = CustomDataset(list_tokens, './data/src/train_smi_mw', args.masking_ratio)
-
+    train_dataset = CustomDataset(train_dataset, [list_smi[idx] for idx in train_dataset.indices], args.masking_ratio)
     train_loader  = DataLoader(train_dataset, batch_size = args.batch_size,
                                pin_memory=True, num_workers=30, shuffle=True
                               )
 
-    if args.valid_dat is None:
-        # construct valid dataset
-        with open(args.valid_filename) as f:
-            lines = f.readlines()
-        list_smi = lines[:int(len(lines)*args.valid_ratio)]
-        list_tokens=[]
-        for line in tqdm( list_smi, desc='loading data'):#list
-            list_tokens.append( [ sp.EncodeAsIds(token.strip())[0] for token in re.split("\s+", line.strip()) ] )
-
-    else:
-        # load valid dataset
-        print(f'loading valid data from {args.valid_dat}')
-        with open(args.valid_dat, 'rb') as f:
-            list_tokens = pickle.load(f)
-
-#    valid_dataset = CustomDataset(list_tokens, './data/src/valid_smi_mw') # no masking
-    valid_dataset = CustomDataset(list_tokens, args.masking_ratio)
- 
+    valid_dataset = CustomDataset(valid_dataset, [list_smi[idx] for idx in valid_dataset.indices], args.masking_ratio)
     valid_loader  = DataLoader(valid_dataset, batch_size = args.batch_size,
                                pin_memory=True, num_workers=30, shuffle=False, 
                               )
@@ -106,13 +82,9 @@ def train(args):
     
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--ckpt_path', help="dataset path", type=str, default = None)    
-    parser.add_argument( '--train_filename', type=str )
-    parser.add_argument( '--valid_filename', type=str )
-    parser.add_argument( '--train_dat', type=str, default=None )
-    parser.add_argument( '--valid_dat', type=str, default=None )
-    parser.add_argument( '--train_ratio', type=float, default=1.0 )
-    parser.add_argument( '--valid_ratio', type=float, default=1.0 )
+    parser.add_argument('--ckpt_path', help="trained model path", type=str, default = None)    
+    parser.add_argument('--filename', help="dataset path", type=str, default = None)    
+    parser.add_argument( '--train_ratio', type=float, default=0.8 )
     parser.add_argument( '--masking_ratio', type=float, default=0.0 )
     parser.add_argument( '--sp_model', type=str )
     parser.add_argument( '--lr', type=float, default=5e-4 )
@@ -125,7 +97,7 @@ if __name__=='__main__':
     parser.add_argument("--devices", default=None)
     parser.add_argument("--strategy", default='auto')
     parser.add_argument('--check_val_every_n_epoch', type=int, default=1 )
-
+    parser.add_argument( '--tokenize_method', type=str,  choices=['ais', 'smi', 'selfies'], default='ais' )
 
     args = parser.parse_args()  
 

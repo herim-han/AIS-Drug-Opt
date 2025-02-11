@@ -82,7 +82,7 @@ def optimize(args, initial_smi, obj_func = lambda docking, SA: -docking-0.5*SA*S
 
     with timer('Initial Tokens') :
         initial_tokens =[
-                          to_ais(s, args.sp_model) if args.tokenize_method =='ais'
+                          to_ais(s, args.sp_model) if args.tokenize_method == 'ais'
                           else " ".join(smiles_tokenizer(sf.encoder(s))) if args.tokenize_method=='selfies'
                           else " ".join(smiles_tokenizer(s)) for s in initial_smi ]
 
@@ -90,41 +90,45 @@ def optimize(args, initial_smi, obj_func = lambda docking, SA: -docking-0.5*SA*S
         initial_tokens = [ sp.encode_as_ids( s ) for s in initial_tokens ]
         print(initial_tokens)
 
-#Fine-tuning service
-#    with timer('Fine Tuning'):
-#        from pytorch_lightning.callbacks import ModelCheckpoint, TQDMProgressBar
-#
-##        checkpoint_callback = ModelCheckpoint(filename=f'ft_ais_{len(ais_vocab)}_{epoch}_{valid_acc:.3f}',
-#        checkpoint_callback = ModelCheckpoint(filename=f'ft_ais_{len(ais_vocab)}',
-#                                              dirpath=f'./cvae_e20_ckpt_file/target_{args.target}/', 
-#                                              verbose=True, 
-#                                              save_top_k=-1, 
-#                                              monitor='valid_acc', 
-#                                              mode='max',
-#                                              every_n_epochs=2000,
-#                                              )
-#
-#        trainer = Trainer(accelerator=args.accelerator, 
-#                          devices    =args.devices, 
-#                          strategy   =args.strategy,
-#                          max_epochs =args.max_epochs,
-#                          check_val_every_n_epoch=args.check_every_n_epoch,
-#                          callbacks = [checkpoint_callback],
-#                         )
-#
-#        model.lr = args.lr
-#        initial_mw = [QED.properties(Chem.MolFromSmiles(smi)).MW for smi in initial_smi ]
-#        with open('ft_mw', 'w') as f:
-#            for smi in initial_smi:
-#                mw = QED.properties(MolFromSmiles(smi)).MW
-#                f.write(str(mw)+'\n')
-#        initial_data = CustomDataset(initial_tokens, 'ft_mw', 0.0)
-#        dataloader = DataLoader(initial_data, batch_size = args.batch_size)
-#        #model.encoder.positional_encoder = PositionalEncoder(args.seq_len, model.encoder.positional_encoder.d_model)
-#        trainer.fit(model, dataloader, dataloader) #(model, train_data, valid_data)
-#        print(':::::::::End Fine Tuning:::::::')
-#        exit(-1)
-#   
+    with timer('Fine Tuning'):
+        print(f'!!!!!!!!!! start Fine-tuning')
+        if args.ft_service:
+            from pytorch_lightning.callbacks import ModelCheckpoint, TQDMProgressBar
+            if not os.path.exists(f'./Fine-tuning/target_{args.target}/'):
+                os.makedirs(f'./Fine-tuning/target_{args.target}/', exist_ok=True)
+            checkpoint_callback = ModelCheckpoint(filename='ft-{epoch}-{valid_loss:.4f}',
+                                                  dirpath=f'./Fine-tuning/target_{args.target}/', 
+                                                  verbose=True, 
+                                                  save_top_k=-1, 
+                                                  monitor='valid_loss', 
+                                                  mode='min',
+                                                  every_n_epochs=int(args.max_epochs/4),
+                                                  )
+            import pytorch_lightning as pl
+            from   pytorch_lightning.loggers.tensorboard import TensorBoardLogger
+            from pytorch_lightning.loggers import CSVLogger
+            csv_logger = CSVLogger(f'./Fine-tuning/target_{args.target}/lightning_csv_logs',
+                                   name=f'{args.d_model}-{args.n_layer}-{args.lr:.5e}')
+            trainer = Trainer(accelerator=args.accelerator, 
+                              devices    =args.devices, 
+                              strategy   =args.strategy,
+                              max_epochs =args.max_epochs,
+                              check_val_every_n_epoch=args.check_every_n_epoch,
+                              callbacks = [checkpoint_callback],
+                              logger=csv_logger
+                             )
+    
+            model.lr = args.lr
+#            initial_mw = [qed.properties(chem.molfromsmiles(smi)).mw for smi in initial_smi ]
+#            with open('ft_mw', 'w') as f:
+#                for smi in initial_smi:
+#                    mw = QED.properties(MolFromSmiles(smi)).MW
+#                    f.write(str(mw)+'\n')
+            initial_data = CustomDataset(initial_tokens, initial_smi, 0.0)
+            dataloader = DataLoader(initial_data, batch_size = args.batch_size)
+            trainer.fit(model, dataloader, dataloader) #(model, train_data, valid_data)
+            print(':::::::::end fine tuning:::::::')
+
 #    with timer('Debugging') :
 #        # for debug
 #        print( trainer.validate(model, dataloaders = DataLoader(initial_data, batch_size=args.batch_size) )  )
@@ -272,7 +276,7 @@ if __name__=='__main__':
     parser.add_argument("--accelerator", default=None)
     parser.add_argument("--devices", default=None)
     parser.add_argument("--strategy", default='auto')
-
+    parser.add_argument('--ft_service', action='store_true', default=False, help='Use this option in case of fine-tuning')
 
     parser.add_argument('--seq_len', help="sequence length", type=int, default=256)
 
