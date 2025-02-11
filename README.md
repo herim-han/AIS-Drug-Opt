@@ -66,13 +66,13 @@ python  run_optimize.py  --sp_model ./data/sp/ais_vocab_100.model \
                          --devices 1 \
                          --opt_bound 1.0
 ```
-> `--csv_path`: Path to the directory for CSV output files.
-> `--n_repeat`: Number of docking simulations.
-> `--num_ask`: Number of queries to sampling compounds.
-> `--tokenize_method`: Tokenization method to use (`smi`,`ais`, and `selfies`).
-> `--opt_iter`: Number of optimization iterations.
-> `--init_num`: Number of initial compounds.
-> `--input_file`: Path to the input file containing ligand SMILES. (.txt or .csv files)
+* `--csv_path`: Path to the directory for CSV output files.
+* `--n_repeat`: Number of docking simulations.
+* `--num_ask`: Number of queries to sampling compounds.
+* `--tokenize_method`: Tokenization method to use (`smi`,`ais`, and `selfies`).
+* `--opt_iter`: Number of optimization iterations.
+* `--init_num`: Number of initial compounds.
+* `--input_file`: Path to the input file containing ligand SMILES. (.txt or .csv files)
 
 ### Fine-tuning using inital smiles:
 ```
@@ -93,7 +93,7 @@ python  run_optimize.py  --sp_model ./data/sp/ais_vocab_100.model \
                          --ft_service                     
 ``` 
 
-The fine-tuned model will be saved at Fine-tuning/
+The fine-tuned model will be saved at ./Fine-tuning/
  
 ### Training model:
 ```
@@ -109,10 +109,10 @@ python train_gru.py  --sp_model data/sp/ais_vocab_100.model \
                      --filename path/to/file \
                      --tokenize_method ais
 ```
-> `--max_epochs`: maximum epochs for training.
-> `--accelerator`: gpu or cpu.
-> `--check_val_every_n_epoch`: check val every n train epochs.
-> `--tokenize_method`: Tokenization method to use (`smi`,`ais`, and `selfies`).
-> `--filename`: smiles input.
+* `--max_epochs`: maximum epochs for training.
+* `--accelerator`: gpu or cpu.
+* `--check_val_every_n_epoch`: check val every n train epochs.
+* `--tokenize_method`: Tokenization method to use (`smi`,`ais`, and `selfies`).
+* `--filename`: smiles input.
 
-The trained model will be saved at lightning_logs/*/checkpoints/
+The pre-trained model will be saved at ./lightning_logs/*/checkpoints/
