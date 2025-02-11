@@ -60,11 +60,11 @@ def train(args):
     if args.ckpt_path is not None:
         model = MyModel.load_from_checkpoint(args.ckpt_path, map_location=model.device)
 
-    checkpoint_callback = ModelCheckpoint(filename='{epoch}-{valid_acc:.3f}', 
+    checkpoint_callback = ModelCheckpoint(filename='{epoch}-{valid_loss:.3f}', 
                                           verbose=True, 
                                           save_top_k=-1, 
-                                          monitor='valid_acc', 
-                                          mode='max',
+                                          monitor='valid_loss', 
+                                          mode='min',
                                           every_n_epochs=args.check_val_every_n_epoch)
 
     trainer = Trainer(accelerator=args.accelerator, 

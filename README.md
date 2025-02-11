@@ -13,43 +13,43 @@ botorch
 ```
 
  * For the other packages, please refer to the `*.yml`. To resolve  `PackageNotFoundError`, please add the following channels before creating the environment. 
- ```bash
-    conda config --add channels pytorch
-    conda config --add channels rdkit
-    conda config --add channels conda-forge
- ```
+```bash
+conda config --add channels pytorch
+conda config --add channels rdkit
+conda config --add channels conda-forge
+```
 or just use 'env.yml' to create the conda environment.
 ```
 conda env create --file env.yml
 ```
 
 ## Download for Checkpoint File and Source Data
-Option 1. To install models and source data, git lfs is needed.
+#### Optional 1. To install models and source data, git lfs is needed.
 ```
 git lfs install
 git lfs pull
 ```
 
-Option 2. You can download the pretrained models used in paper. 
+#### Optional 2. You can download the pretrained models used in paper. 
    - [ckpt_files<sub>](https://docs.google.com/uc?export=download&id=1FINro8crgOSS0XpSwWRGMCqHGR5fRVnA) 
    - [src_data<sub>](https://docs.google.com/uc?export=download&id=1yHiIs6K3ndoA5cznSgp0ycZnEbFKFKjQ)
 
-Option 3. It will be downloaded to use 'gdown'.
+#### Optional 3. It will be downloaded to use 'gdown'.
 ```
 gdown https://drive.google.com/uc?id=1FINro8crgOSS0XpSwWRGMCqHGR5fRVnA
 gdown https://drive.google.com/uc?id=1yHiIs6K3ndoA5cznSgp0ycZnEbFKFKjQ
 ```
  
 ## Setting Environment for Docking Simulation
-For docking simulation, define the `BASEDIR` path as follows:
+#### Define the `BASEDIR` path as follows:
 ```
 export BASEDIR=path/to/AIS-Drug-Opt/simulation
 ```
 **When you apply it to other targets:**
 Prepare .pdbqt for the apo-protein and modify the binding pocket in `input.json`.
 
-## Run Optimization
-Running command:
+## Run
+#### run optimize from pre-trained model:
 ```
 python  run_optimize.py  --sp_model ./data/sp/ais_vocab_100.model \
                          --ckpt_path ./models/ais_100_cvae.ckpt \
@@ -73,3 +73,46 @@ python  run_optimize.py  --sp_model ./data/sp/ais_vocab_100.model \
 > `--opt_iter`: Number of optimization iterations.
 > `--init_num`: Number of initial compounds.
 > `--input_file`: Path to the input file containing ligand SMILES. (.txt or .csv files)
+
+#### fine-tuning using inital smiles:
+```
+python  run_optimize.py  --sp_model ./data/sp/ais_vocab_100.model \
+                         --ckpt_path ./models/ais_100_cvae.ckpt \
+                         --csv_path path/to/dir \
+                         --n_repeat 10 \
+                         --num_ask 100 \
+                         --tokenize_method ais \
+                         --opt_iter 5 \ 
+                         --init_num 10 \                     
+                         --target pdk4 \
+                         --input_file ligand_smi/randn_pdk4.txt \                      
+                         --accelerator gpu \
+                         --strategy='ddp' \                  
+                         --devices 1 \
+                         --opt_bound 1.0 \
+                         --ft_service                     
+``` 
+
+The fine-tuned model will be saved at Fine-tuning/
+ 
+#### Training model:
+```
+python train_gru.py  --sp_model data/sp/ais_vocab_100.model \
+                     --max_epochs 300 \
+                     --batch_size 512 \
+                     --accelerator gpu \
+                     --devices 1  \
+                     --check_val_every_n_epoch 5 \
+                     --strategy='ddp' \
+                     --lr 5e-5 \
+                     --masking_ratio 0 \
+                     --filename path/to/file \
+                     --tokenize_method ais
+```
+> `--max_epochs`: maximum epochs for training.
+> `--accelerator`: gpu or cpu.
+> `--check_val_every_n_epoch`: check val every n train epochs.
+> `--tokenize_method`: Tokenization method to use (`smi`,`ais`, and `selfies`).
+> `--filename`: smiles input.
+
+The trained model will be saved at lightning_logs/*/checkpoints/
