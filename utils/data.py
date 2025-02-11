@@ -15,18 +15,13 @@ import numpy as np
 pad_id = 0 ; sos_id = 1 ; eos_id = 2 ; unk_id = 3
 
 class CustomDataset(Dataset):
-    def __init__(self, list_tokens, masking_ratio=0.0):#pad=0, unk=3
+    def __init__(self, list_tokens, smi, masking_ratio=0.0):#pad=0, unk=3
         super().__init__()
         self.seq_len = max( [ len(tokens) for tokens in list_tokens])+2
         self.masking_ratio = masking_ratio
-        list_tokens = [ pad_or_truncate([sos_id] + tokens + [eos_id], self.seq_len) for tokens in list_tokens ]
-#        self.data = torch.LongTensor(list_tokens)
-#        self.prop = np.loadtxt(filename, dtype=np.float32)
-
-        self.smi = open(filename).readlines()
+        self.smi = smi
         with Pool(24) as p:
-            list_tokens = ((tokens, self.seq_len) for tokens in list_tokens)
-            list_tokens = list( p.map (pad_or_truncate, list_tokens ) )
+            list_tokens = [ pad_or_truncate([sos_id] + tokens + [eos_id], self.seq_len) for tokens in list_tokens ]
             self.data = torch.LongTensor(list_tokens)
             self.prop = list (p.map (calculate_prop, self.smi) )
 
@@ -40,9 +35,6 @@ class CustomDataset(Dataset):
     def __len__(self):
         return len(self.data)
 
-#def pad_or_truncate(inp):
-#    tokenized_text, seq_len = inp[0], inp[1]
-#    tokenized_text = [sos_id] + tokenized_text + [eos_id]
 def pad_or_truncate(tokenized_text, seq_len):
     if len(tokenized_text) < seq_len:
         left = seq_len - len(tokenized_text)
@@ -52,7 +44,7 @@ def pad_or_truncate(tokenized_text, seq_len):
         tokenized_text = tokenized_text[:seq_len]
     return tokenized_text
 
-def calculate_prop(s):
+def calculate_prop(s): ##conditional vector
     mol = Chem.MolFromSmiles(Chem.CanonSmiles(s))
     prop_mw= QED.properties(mol).MW
     return prop_mw
