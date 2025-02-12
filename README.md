@@ -47,14 +47,15 @@ export BASEDIR=path/to/AIS-Drug-Opt/simulation
 ```
 #### When you apply it to other targets:
 Prepare simulation/qvina/input/*.pdbqt for the apo-protein and modify the binding pocket in `utils/input.json`.
+You need to assign a specific target name (for example, tmp_target):
 ```
 utils/input.json
 
 {
-    "target_name": {
-        "targetfile": "target_name.pdbqt", #located in simulation/qvina/input/
-        "pocket_param": [x_center, y_center, z_center, x_size, y_size, z_size]
-             }
+"tmp_target": {
+    "targetfile": "tmp_target.pdbqt", #located in simulation/qvina/input/
+    "pocket_param": [x_center, y_center, z_center, x_size, y_size, z_size]
+         }
 }
 ```
 
