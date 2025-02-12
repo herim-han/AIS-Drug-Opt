@@ -106,7 +106,7 @@ python  run_optimize.py  --sp_model ./data/sp/ais_vocab_100.model \
 
 The fine-tuned model will be saved at ./Fine-tuning/
  
-### Training model:
+### Pre-training model:
 ```
 python train_gru.py  --sp_model data/sp/ais_vocab_100.model \
                      --max_epochs 300 \
