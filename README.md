@@ -30,7 +30,7 @@ git lfs install
 git lfs pull
 ```
 
-**Optional 2.** Download link:
+**Optional 2.** Using download link:
    - [ckpt_files<sub>](https://docs.google.com/uc?export=download&id=1FINro8crgOSS0XpSwWRGMCqHGR5fRVnA) 
    - [src_data<sub>](https://docs.google.com/uc?export=download&id=1yHiIs6K3ndoA5cznSgp0ycZnEbFKFKjQ)
 
@@ -117,4 +117,4 @@ python train_gru.py  --sp_model data/sp/ais_vocab_100.model \
 * `--filename`: smiles input.
 * `--train_ratio`: split dataset for train dataset (default: 0.2)
 
-The pre-trained model will be saved at ./lightning_logs/*/checkpoints/
+The pre-trained model will be stored at ./lightning_logs/*/checkpoints/
