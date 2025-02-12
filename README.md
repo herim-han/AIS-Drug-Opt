@@ -107,12 +107,14 @@ python train_gru.py  --sp_model data/sp/ais_vocab_100.model \
                      --lr 5e-5 \
                      --masking_ratio 0 \
                      --filename path/to/file \
-                     --tokenize_method ais
+                     --tokenize_method ais \
+                     --train_ratio 0.2
 ```
 * `--max_epochs`: maximum epochs for training.
 * `--accelerator`: gpu or cpu.
 * `--check_val_every_n_epoch`: check val every n train epochs.
 * `--tokenize_method`: Tokenization method to use (`smi`,`ais`, and `selfies`).
 * `--filename`: smiles input.
+* `--train_ratio`: split dataset for train dataset (default: 0.2)
 
 The pre-trained model will be saved at ./lightning_logs/*/checkpoints/
