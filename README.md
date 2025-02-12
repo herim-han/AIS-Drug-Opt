@@ -46,7 +46,7 @@ gdown https://drive.google.com/uc?id=1yHiIs6K3ndoA5cznSgp0ycZnEbFKFKjQ
 export BASEDIR=path/to/AIS-Drug-Opt/simulation
 ```
 #### When you apply it to other targets:
-Prepare .pdbqt for the apo-protein and modify the binding pocket in `input.json`.
+Prepare .pdbqt for the apo-protein and modify the binding pocket in `utils/input.json`.
 
 ## Run
 ### Run optimize from pre-trained model:
