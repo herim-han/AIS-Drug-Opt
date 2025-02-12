@@ -52,10 +52,10 @@ You need to assign a specific target name (for example, tmp_target):
 utils/input.json
 
 {
-"tmp_target": {
-    "targetfile": "tmp_target.pdbqt", #located in simulation/qvina/input/
-    "pocket_param": [x_center, y_center, z_center, x_size, y_size, z_size]
-         }
+   "tmp_target": {
+       "targetfile": "tmp_target.pdbqt", #located in simulation/qvina/input/
+       "pocket_param": [x_center, y_center, z_center, x_size, y_size, z_size]
+       }
 }
 ```
 
