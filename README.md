@@ -31,7 +31,7 @@ git lfs pull
 ```
 
 **Optional 2.** Using download link:
-   - [ckpt_files<sub>](https://docs.google.com/uc?export=download&id=1FINro8crgOSS0XpSwWRGMCqHGR5fRVnA) 
+   - [checkpoints<sub>](https://docs.google.com/uc?export=download&id=1FINro8crgOSS0XpSwWRGMCqHGR5fRVnA) 
    - [src_data<sub>](https://docs.google.com/uc?export=download&id=1yHiIs6K3ndoA5cznSgp0ycZnEbFKFKjQ)
 
 **Optional 3.** Using gdown to install models and source data:
@@ -46,7 +46,17 @@ gdown https://drive.google.com/uc?id=1yHiIs6K3ndoA5cznSgp0ycZnEbFKFKjQ
 export BASEDIR=path/to/AIS-Drug-Opt/simulation
 ```
 #### When you apply it to other targets:
-Prepare .pdbqt for the apo-protein and modify the binding pocket in `utils/input.json`.
+Prepare simulation/qvina/input/*.pdbqt for the apo-protein and modify the binding pocket in `utils/input.json`.
+```
+utils/input.json
+
+{
+    "target_name": {
+        "targetfile": "target_name.pdbqt", #located in simulation/qvina/input/
+        "pocket_param": [x_center, y_center, z_center, x_size, y_size, z_size]
+             }
+}
+```
 
 ## Run
 ### Run optimize from pre-trained model:
