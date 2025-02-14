@@ -26,7 +26,7 @@ conda env create --file env.yml
 ## Download for All Checkpoint Files and Source Data
 **Optional 1.** Using download link to install models and full source data:
    - [checkpoints<sub>](https://docs.google.com/uc?export=download&id=1FINro8crgOSS0XpSwWRGMCqHGR5fRVnA) 
-   - [src_data<sub>](https://docs.google.com/uc?export=download&id=1yHiIs6K3ndoA5cznSgp0ycZnEbFKFKjQ)
+   - [source+data<sub>](https://docs.google.com/uc?export=download&id=1yHiIs6K3ndoA5cznSgp0ycZnEbFKFKjQ)
 
 **Optional 2.** Using gdown:
 ```
@@ -58,7 +58,7 @@ utils/input.json
 ```
 python  run_optimize.py  --sp_model ./data/sp/ais_vocab_100.model \
                          --ckpt_path ./models/ais_100_cvae.ckpt \
-                         --csv_path path/to/dir \
+                         --csv_path path/to/output \
                          --n_repeat 10 \
                          --num_ask 100 \
                          --tokenize_method ais \
@@ -83,7 +83,7 @@ python  run_optimize.py  --sp_model ./data/sp/ais_vocab_100.model \
 ```
 python  run_optimize.py  --sp_model ./data/sp/ais_vocab_100.model \
                          --ckpt_path ./models/ais_100_cvae.ckpt \
-                         --csv_path path/to/dir \
+                         --csv_path path/to/output \
                          --n_repeat 10 \
                          --num_ask 100 \
                          --tokenize_method ais \
