@@ -23,18 +23,12 @@ or just use 'env.yml' to create the conda environment.
 conda env create --file env.yml
 ```
 
-## Download for Checkpoint File and Source Data
-**Optional 1.** Using git lfs to install models and source data:
-```
-git lfs install
-git lfs pull
-```
-
-**Optional 2.** Using download link:
+## Download for All Checkpoint Files and Source Data
+**Optional 1.** Using download link to install models and full source data:
    - [checkpoints<sub>](https://docs.google.com/uc?export=download&id=1FINro8crgOSS0XpSwWRGMCqHGR5fRVnA) 
    - [src_data<sub>](https://docs.google.com/uc?export=download&id=1yHiIs6K3ndoA5cznSgp0ycZnEbFKFKjQ)
 
-**Optional 3.** Using gdown to install models and source data:
+**Optional 2.** Using gdown:
 ```
 gdown https://drive.google.com/uc?id=1FINro8crgOSS0XpSwWRGMCqHGR5fRVnA
 gdown https://drive.google.com/uc?id=1yHiIs6K3ndoA5cznSgp0ycZnEbFKFKjQ
