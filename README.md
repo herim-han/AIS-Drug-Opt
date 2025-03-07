@@ -123,4 +123,6 @@ python train_gru.py  --sp_model data/sp/ais_vocab_100.model \
 * `--train_ratio`: split dataset for train dataset (default: 0.2)
 
 The pre-trained model will be stored at ./lightning_logs/*/checkpoints/  
+<p style="color: gray; text-align: right;">
 updated March, 2025
+</p>
