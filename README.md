@@ -122,5 +122,5 @@ python train_gru.py  --sp_model data/sp/ais_vocab_100.model \
 * `--filename`: smiles input.
 * `--train_ratio`: split dataset for train dataset (default: 0.2)
 
-The pre-trained model will be stored at ./lightning_logs/*/checkpoints/  
+The pre-trained model will be stored at ./lightning_logs/version_*/checkpoints/  
 <sub>updated March, 2025</sub>
