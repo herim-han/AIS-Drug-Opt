@@ -11,7 +11,7 @@ rdkit
 sentencepiece
 botorch
 ```
-For the other packages, please refer to the `*.yml`. To resolve  `PackageNotFoundError`, please add the following channels before creating the environment. 
+For the other packages, please refer to the `env.yml`. To resolve  `PackageNotFoundError`, please add the following channels before creating the environment. 
 
 ```bash
 conda config --add channels pytorch

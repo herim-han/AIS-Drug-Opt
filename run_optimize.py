@@ -119,11 +119,6 @@ def optimize(args, initial_smi, obj_func = lambda docking, SA: -docking-0.5*SA*S
                              )
     
             model.lr = args.lr
-#            initial_mw = [qed.properties(chem.molfromsmiles(smi)).mw for smi in initial_smi ]
-#            with open('ft_mw', 'w') as f:
-#                for smi in initial_smi:
-#                    mw = QED.properties(MolFromSmiles(smi)).MW
-#                    f.write(str(mw)+'\n')
             initial_data = CustomDataset(initial_tokens, initial_smi, 0.0)
             dataloader = DataLoader(initial_data, batch_size = args.batch_size)
             trainer.fit(model, dataloader, dataloader) #(model, train_data, valid_data)
