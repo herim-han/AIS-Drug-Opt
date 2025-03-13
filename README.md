@@ -84,18 +84,14 @@ python  run_optimize.py  --sp_model ./data/sp/ais_vocab_100.model \
 python  run_optimize.py  --sp_model ./data/sp/ais_vocab_100.model \
                          --ckpt_path ./models/ais_100_cvae.ckpt \
                          --csv_path path/to/output \
-                         --n_repeat 10 \
-                         --num_ask 100 \
                          --tokenize_method ais \
-                         --opt_iter 5 \ 
-                         --init_num 10 \                     
                          --target pdk4 \
-                         --input_file ligand_smi/randn_pdk4.txt \                      
+                         --input_file ligand_smi/randn_pdk4.txt \
                          --accelerator gpu \
-                         --strategy='ddp' \                  
+                         --strategy='ddp' \
                          --devices 1 \
                          --opt_bound 1.0 \
-                         --ft_service                     
+                         --ft_service
 ``` 
 
 The fine-tuned model will be saved at ./Fine-tuning/
