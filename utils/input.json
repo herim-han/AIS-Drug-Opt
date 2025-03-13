@@ -14,5 +14,13 @@
     "ck1d": {
         "targetfile": "ck1d_receptor.pdbqt",
         "pocket_param": [-22.006,-2.630,38.979, 25.0, 25.0, 25.0]
+    },
+    "4zzj": {
+        "targetfile": "4zzj_noligand.pdbqt",
+        "pocket_param": [3.035,47.092,2.304, 15.0, 15.0, 15.0]
+    },
+    "5btr": {
+        "targetfile": "5btr_noligand.pdbqt",
+        "pocket_param": [-61.862,83.598,11.339,15.0, 15.0, 15.0]
     }
 }

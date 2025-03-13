@@ -16,6 +16,7 @@ import json
 config = json.load(open('utils/input.json','r'))
 
 def func(idx, smiles, csv_path, num_smiles, target):
+    coord_dir = f'{csv_path}/xyz_coord'
     #convert ligand smiles to .pdbqt
     save_dir = f"{csv_path}/input-"+str(idx)
     tmp_dir = f'{csv_path}/input-'+str(idx)+'/tmp.smi'
@@ -63,21 +64,21 @@ def func(idx, smiles, csv_path, num_smiles, target):
             lines = open(filename, 'r').readlines()
             score = re.split('\s+', lines[1].strip())[3]
 
-#            # generate .xyz file
-#            current_coord =[]
-#            for line in lines:
-#                current_coord.append(line.strip())
-#                if ('ENDMDL' in line):
-#                    break
-#
-#            with open(f'{coord_dir}/{num_smiles}-{idx}.xyz', 'w') as f:
-#                f.write(str(sum (line[:4] == 'ATOM' for line in current_coord)))
-#                f.write('\n\n')
-#                for line in current_coord:
-#                    if 'ATOM' in line:
-#                        data = re.split('\s+', line.strip())
-#                        f.write(data[2]+"\t"+data[5]+"\t"+data[6]+"\t"+data[7]+'\n') 
-##            os.system(f'rm -rf {save_dir}' )
+            # generate .xyz file
+            current_coord =[]
+            for line in lines:
+                current_coord.append(line.strip())
+                if ('ENDMDL' in line):
+                    break
+
+            with open(f'{coord_dir}/{num_smiles}-{idx}.xyz', 'w') as f:
+                f.write(str(sum (line[:4] == 'ATOM' for line in current_coord)))
+                f.write('\n\n')
+                for line in current_coord:
+                    if 'ATOM' in line:
+                        data = re.split('\s+', line.strip())
+                        f.write(data[2]+"\t"+data[5]+"\t"+data[6]+"\t"+data[7]+'\n') 
+#            os.system(f'rm -rf {save_dir}' )
             return float(score)
 
 def get_property_qvina(list_smiles, verbose=True, n_repeat=10, csv_path='.', num_smiles=0, target='pdk4'):
@@ -85,7 +86,8 @@ def get_property_qvina(list_smiles, verbose=True, n_repeat=10, csv_path='.', num
     import sascorer
     import utils.sascorer as sascorer
 
-#    coord_dir = f'{csv_path}/xyz_coord'
+    coord_dir = f'{csv_path}/xyz_coord'
+    Path(coord_dir).mkdir(parents=True,exist_ok=True)
     list_docking=[]
     list_SA=[]
     val_smiles=[]
@@ -103,7 +105,7 @@ def get_property_qvina(list_smiles, verbose=True, n_repeat=10, csv_path='.', num
             store_score = []
 
         if len(store_score)!=0:
-#            os.system(f'cp {coord_dir}/{num_smiles}-{store_score.index(min(store_score))}.xyz {coord_dir}/{num_smiles}-topscored.xyz')
+            os.system(f'cp {coord_dir}/{num_smiles}-{store_score.index(min(store_score))}.xyz {coord_dir}/{num_smiles}-topscored.xyz')
             num_smiles+=1
             success_indice.append(idx)
             list_SA.append(round(s, 2))
@@ -123,9 +125,21 @@ if __name__=="__main__":
     from rdkit import Chem
     import pickle
     import pandas as pd
-    target = 'pdk4'
-    list_smi = [line.strip() for line in open(f'ligand_smi/randn_{target}.txt').readlines()][:5]
+    import os
+    from pathlib import Path
+    target = '5btr'
+    csv_path='test'
+    
+    list_smi = [line.strip() for line in open(f'ligand_smi/can_sirt1.txt').readlines()]
+#    list_smi = [
+#'C[C@H]1CN(c2ccc(nc2N1C(=O)Nc3cccc(c3)c4cnco4)c5cccc(c5)C(F)(F)F)C',
+#'[s]1c(nc(c1C(=O)Nc3c(cccc3)c4nc5[s]cc([n]5c4)CN6CCOCC6)C)c2cnccc2',
+#'O=C(NC1=C(C=CC=C1)C2=CN3C(SC=C3CN4CCNCC4)=N2)C5=NC6=C(N=C5)C=CC=C6',
+#'COc1cc(C(=O)Nc2ccccc2-c2cn3c(CN4CCNCC4)csc3n2)cc(OC)c1OC',
+#'O=C(Nc1ccccc1-c1cn2c(CN3CC[C@@H](O)C3)csc2n1)c1ccc2ccccc2c1'
+#    ]
     print(len(list_smi))
-    list_smiles, list_docking, list_SA, sucess_indices, num_smiles, failed_smiles = get_property_qvina(list_smi, n_repeat=10, target=target, csv_path='testtest/')
-
+    list_smiles, list_docking, list_SA, sucess_indices, num_smiles, failed_smiles = get_property_qvina(list_smi, n_repeat=10, target=target, csv_path='test/')
     print(list_smi, list_docking, list_SA)
+    df = pd.DataFrame({'smi':list_smiles, 'docking_score':list_docking, 'sa_score':list_SA})
+    df.to_csv('5BTR_docking.csv',index=False)
