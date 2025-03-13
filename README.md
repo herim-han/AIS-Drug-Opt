@@ -83,7 +83,6 @@ python  run_optimize.py  --sp_model ./data/sp/ais_vocab_100.model \
 ```
 python  run_optimize.py  --sp_model ./data/sp/ais_vocab_100.model \
                          --ckpt_path ./models/ais_100_cvae.ckpt \
-                         --csv_path path/to/output \
                          --tokenize_method ais \
                          --target pdk4 \
                          --input_file ligand_smi/randn_pdk4.txt \
