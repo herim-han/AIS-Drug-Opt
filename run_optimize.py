@@ -79,7 +79,7 @@ def optimize(args, initial_smi, obj_func = lambda docking, SA: -docking-0.5*SA*S
             os.environ["NCCL_IB_DISABLE"] = "1"
             os.environ["NCCL_SOCKET_IFNAME"] = "lo"
         else:
-            torch.device('cpu')
+            device=torch.device('cpu')
         model = MyModel.load_from_checkpoint(args.ckpt_path, strict=False, map_location=device)
         trainer = Trainer(accelerator=args.accelerator, 
                           devices    =args.devices, 
