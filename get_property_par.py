@@ -12,6 +12,7 @@ from functools import partial
 import warnings
 from rdkit.Chem import CanonSmiles
 import json
+import pathlig import Path
 
 config = json.load(open('utils/input.json','r'))
 
