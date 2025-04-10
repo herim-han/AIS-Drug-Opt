@@ -12,7 +12,7 @@ from functools import partial
 import warnings
 from rdkit.Chem import CanonSmiles
 import json
-import pathlig import Path
+from pathlib import Path
 
 config = json.load(open('utils/input.json','r'))
 
@@ -128,16 +128,14 @@ if __name__=="__main__":
     import pandas as pd
     import os
     target = '5btr'
-    csv_path='test'
     
-    list_smi = [line.strip() for line in open(f'ligand_smi/can_sirt1.txt').readlines()]
-#    list_smi = [
-#'C[C@H]1CN(c2ccc(nc2N1C(=O)Nc3cccc(c3)c4cnco4)c5cccc(c5)C(F)(F)F)C',
-#'[s]1c(nc(c1C(=O)Nc3c(cccc3)c4nc5[s]cc([n]5c4)CN6CCOCC6)C)c2cnccc2',
-#'O=C(NC1=C(C=CC=C1)C2=CN3C(SC=C3CN4CCNCC4)=N2)C5=NC6=C(N=C5)C=CC=C6',
-#'COc1cc(C(=O)Nc2ccccc2-c2cn3c(CN4CCNCC4)csc3n2)cc(OC)c1OC',
-#'O=C(Nc1ccccc1-c1cn2c(CN3CC[C@@H](O)C3)csc2n1)c1ccc2ccccc2c1'
-#    ]
+    list_smi = [
+'C[C@H]1CN(c2ccc(nc2N1C(=O)Nc3cccc(c3)c4cnco4)c5cccc(c5)C(F)(F)F)C',
+'[s]1c(nc(c1C(=O)Nc3c(cccc3)c4nc5[s]cc([n]5c4)CN6CCOCC6)C)c2cnccc2',
+'O=C(NC1=C(C=CC=C1)C2=CN3C(SC=C3CN4CCNCC4)=N2)C5=NC6=C(N=C5)C=CC=C6',
+'COc1cc(C(=O)Nc2ccccc2-c2cn3c(CN4CCNCC4)csc3n2)cc(OC)c1OC',
+'O=C(Nc1ccccc1-c1cn2c(CN3CC[C@@H](O)C3)csc2n1)c1ccc2ccccc2c1'
+    ]
     print(len(list_smi))
     list_smiles, list_docking, list_SA, sucess_indices, num_smiles, failed_smiles = get_property_qvina(list_smi, n_repeat=10, target=target, csv_path='test/')
     print(list_smi, list_docking, list_SA)
