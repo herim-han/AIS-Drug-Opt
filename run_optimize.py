@@ -22,7 +22,7 @@ from elem_ais import decode as to_smi
 from elem_ais import smiles_tokenizer 
 import selfies as sf
 import torch.nn as nn
-
+from pathlib import Path
 dict_timer = {}
 
 @contextmanager
@@ -72,7 +72,14 @@ def optimize(args, initial_smi, obj_func = lambda docking, SA: -docking-0.5*SA*S
                          lr = args.lr
                         )
 
-        device = torch.device('cuda') if torch.cuda.is_available()==True else torch.device('cpu')
+#        device = torch.device('cuda') if torch.cuda.is_available()==True else torch.device('cpu')
+        if torch.cuda.is_available():
+            device=torch.device('cuda')
+            os.environ["NCCL_DEBUG"] = "INFO"
+            os.environ["NCCL_IB_DISABLE"] = "1"
+            os.environ["NCCL_SOCKET_IFNAME"] = "lo"
+        else:
+            torch.device('cpu')
         model = MyModel.load_from_checkpoint(args.ckpt_path, strict=False, map_location=device)
         trainer = Trainer(accelerator=args.accelerator, 
                           devices    =args.devices, 
@@ -311,6 +318,7 @@ if __name__=='__main__':
     if args.input_file.endswith('.csv'):
         initial_smi = pd.read_csv(args.input_file)['smiles'].tolist()
     else:
-        initial_smi = [ line.strip() for line in open(args.input_file).readlines() ][:args.init_num]
+        #initial_smi = [ line.strip() for line in open(args.input_file).readlines() ][:args.init_num]
+        initial_smi = [ line.strip() for line in open(args.input_file).readlines() ]
     print('initial smi:\n',initial_smi)
     result = optimize(args, initial_smi)
