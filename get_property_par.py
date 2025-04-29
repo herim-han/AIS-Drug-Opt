@@ -24,15 +24,17 @@ def func(idx, smiles, csv_path, num_smiles, target):
     os.system(f'mkdir -p {save_dir}' )
 
     try:
-        #print(os.path.isfile(targetfile) )
-        data = subprocess.run(f'obabel -:"{smiles}" -ocan --gen3D -h', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=20)
-        smiles = data.stdout.decode('utf-8').strip()
         targetname = config[f'{target}']['targetfile']
         targetfile = f'{os.environ["BASEDIR"]}/qvina/input/{targetname}'
         pocket_param = config[f'{target}']['pocket_param']
         os.system('echo "' + smiles + '" > ' + tmp_dir)
-        subprocess.run('obabel -i smi ' + tmp_dir + ' -O ' + save_dir + '/tmp.pdbqt --gen3D -h', shell=True, timeout=10)
-        results = subprocess.run(f'{os.environ["BASEDIR"]}/qvina/qvina2.1 --receptor {targetfile} --ligand ' + save_dir + f'/tmp.pdbqt --center_x {pocket_param[0]} --center_y {pocket_param[1]} --center_z {pocket_param[2]} --size_x {pocket_param[3]} --size_y {pocket_param[4]} --size_z {pocket_param[5]} --exhaustiveness 1 --cpu 1 --num_modes 10 --out ' + save_dir + '/tmp_out.pdbqt', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=20)
+#        print('create pdb through MM calcuation for conformer generation')
+        # MM calculation for ligand 3D conformation
+        subprocess.run('obabel -i smi ' + tmp_dir + ' -O ' + save_dir + '/tmp.pdb --gen3D --conformer --nconf 1 --score rmsd --ff MMFF94  --minimize', shell=True, timeout=10)
+        subprocess.run(f'obabel {save_dir}/tmp.pdb -O {save_dir}/tmp.pdbqt', shell=True, timeout=10)
+        results = subprocess.run(f'{os.environ["BASEDIR"]}/qvina/qvina2.1 --receptor {targetfile} --ligand ' + save_dir + f'/tmp.pdbqt --center_x {pocket_param[0]} --center_y {pocket_param[1]} --center_z {pocket_param[2]} --size_x {pocket_param[3]} --size_y {pocket_param[4]} --size_z {pocket_param[5]} --exhaustiveness {param} --cpu 1 --num_modes 10 --out ' + save_dir + '/tmp_out.pdbqt', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60)
+#        results = subprocess.run(f'{os.environ["BASEDIR"]}/qvina/qvina2.1 --receptor {targetfile} --ligand testtest/tmp1.pdbqt --center_x {pocket_param[0]} --center_y {pocket_param[1]} --center_z {pocket_param[2]} --size_x {pocket_param[3]} --size_y {pocket_param[4]} --size_z {pocket_param[5]} --exhaustiveness {param} --cpu 1 --num_modes 10 --out ' + save_dir + '/tmp_out.pdbqt', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60)
+        #print(os.path.isfile(targetfile) )
 
         filename = save_dir + '/tmp_out.pdbqt'
         error_message = results.stderr.decode('utf-8')
@@ -127,7 +129,7 @@ if __name__=="__main__":
     import pickle
     import pandas as pd
     import os
-    target = '5btr'
+    target = 'pdk4'
     
     list_smi = [
 'C[C@H]1CN(c2ccc(nc2N1C(=O)Nc3cccc(c3)c4cnco4)c5cccc(c5)C(F)(F)F)C',
