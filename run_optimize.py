@@ -72,14 +72,14 @@ def optimize(args, initial_smi, obj_func = lambda docking, SA: -docking-0.5*SA*S
                          lr = args.lr
                         )
 
-#        device = torch.device('cuda') if torch.cuda.is_available()==True else torch.device('cpu')
-        if torch.cuda.is_available():
-            device=torch.device('cuda')
-            os.environ["NCCL_DEBUG"] = "INFO"
-            os.environ["NCCL_IB_DISABLE"] = "1"
-            os.environ["NCCL_SOCKET_IFNAME"] = "lo"
-        else:
-            device=torch.device('cpu')
+        device = torch.device('cuda') if torch.cuda.is_available()==True else torch.device('cpu')
+#        if torch.cuda.is_available():
+#            device=torch.device('cuda')
+#            os.environ["NCCL_DEBUG"] = "INFO"
+#            os.environ["NCCL_IB_DISABLE"] = "1"
+#            os.environ["NCCL_SOCKET_IFNAME"] = "lo"
+#        else:
+#            device=torch.device('cpu')
         model = MyModel.load_from_checkpoint(args.ckpt_path, strict=False, map_location=device)
         trainer = Trainer(accelerator=args.accelerator, 
                           devices    =args.devices, 
