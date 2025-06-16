@@ -1,7 +1,7 @@
 Hybridization of SMILES and chemical-environment-aware tokens to improve performance of molecular structure generation
 ===
 This is molecular structure generation using SMI+AIS(100) tokens based on Pytorch framework.
-Hybridization of SMILES and chemical-environment-aware tokens to improve performance of molecular structure generation. ([Sci. Rep., 2025, 15, 16892<sub>](https://www.nature.com/articles/s41598-025-01890-7))
+*Hybridization of SMILES and chemical-environment-aware tokens to improve performance of molecular structure generation.* ([Sci. Rep., 2025, 15, 16892<sub>](https://www.nature.com/articles/s41598-025-01890-7))
 
 ## Dependencies:
 ```pip-requirements
