@@ -73,13 +73,7 @@ def optimize(args, initial_smi, obj_func = lambda docking, SA: -docking-0.5*SA*S
                         )
 
         device = torch.device('cuda') if torch.cuda.is_available()==True else torch.device('cpu')
-#        if torch.cuda.is_available():
-#            device=torch.device('cuda')
-#            os.environ["NCCL_DEBUG"] = "INFO"
-#            os.environ["NCCL_IB_DISABLE"] = "1"
-#            os.environ["NCCL_SOCKET_IFNAME"] = "lo"
-#        else:
-#            device=torch.device('cpu')
+
         model = MyModel.load_from_checkpoint(args.ckpt_path, strict=False, map_location=device)
         trainer = Trainer(accelerator=args.accelerator, 
                           devices    =args.devices, 
@@ -95,12 +89,11 @@ def optimize(args, initial_smi, obj_func = lambda docking, SA: -docking-0.5*SA*S
 
         print('encoding ais:\n', initial_tokens)
         initial_tokens = [ sp.encode_as_ids( s ) for s in initial_tokens ]
-        print(initial_tokens)
 
     with timer('Fine Tuning'):
-        print(f'!!!!!!!!!! start Fine-tuning')
         if args.ft_service:
             from pytorch_lightning.callbacks import ModelCheckpoint, TQDMProgressBar
+            print(f'!!!!!!!!!! Start Fine-tuning')
             if not os.path.exists(f'./Fine-tuning/target_{args.target}/'):
                 os.makedirs(f'./Fine-tuning/target_{args.target}/', exist_ok=True)
             checkpoint_callback = ModelCheckpoint(filename='ft-{epoch}-{valid_loss:.4f}',
@@ -131,10 +124,6 @@ def optimize(args, initial_smi, obj_func = lambda docking, SA: -docking-0.5*SA*S
             trainer.fit(model, dataloader, dataloader) #(model, train_data, valid_data)
             print(':::::::::end fine tuning:::::::')
 
-#    with timer('Debugging') :
-#        # for debug
-#        print( trainer.validate(model, dataloaders = DataLoader(initial_data, batch_size=args.batch_size) )  )
-
     with timer('Initial Encoder Pred') :
         model.encoder.positional_encoder = PositionalEncoder(args.seq_len, model.encoder.positional_encoder.d_model)
         initial_feature = trainer.predict(model.encoder, dataloaders=get_encoder_dataloader(initial_tokens, initial_smi,args.batch_size) )#Encoder.predict_step
@@ -145,6 +134,7 @@ def optimize(args, initial_smi, obj_func = lambda docking, SA: -docking-0.5*SA*S
 
     with timer('Initial Get Property') :
         valid_struct_id=0
+        print(f'start docking program for initial mol: {len(initial_smi)}')
         _, initial_docking, initial_SA, _, _, failed_smiles = get_property_qvina(initial_smi, n_repeat = args.n_repeat_docking, csv_path=f'{args.csv_path}/tmp', num_smiles = valid_struct_id, target=args.target)
     if len(failed_smiles)>0:
         print('Error! get_property return error for initial smiles. please check initial smiles')
@@ -156,9 +146,6 @@ def optimize(args, initial_smi, obj_func = lambda docking, SA: -docking-0.5*SA*S
                         }
                    }
 
-    print("initial docking: ", initial_docking)        
-    print("initial SA: ", initial_SA)
-
     dict_output = {0: { "tokens": initial_tokens, 
                         "smi": initial_smi, 
                         "feature": initial_feature, 
@@ -167,8 +154,6 @@ def optimize(args, initial_smi, obj_func = lambda docking, SA: -docking-0.5*SA*S
                         "obj_val": [ obj_func(docking,SA) for docking, SA in zip(initial_docking, initial_SA) ],
                        }
                   }
-
-    print("initial obj:", dict_output[0]['obj_val' ] )
 
     all_feature = initial_feature #initialize feature tensor
     obj_val     = torch.tensor([ obj_func(docking,SA) for docking, SA in zip(initial_docking, initial_SA) ], device=device, dtype=dtype)
@@ -189,7 +174,6 @@ def optimize(args, initial_smi, obj_func = lambda docking, SA: -docking-0.5*SA*S
             tokens = trainer.predict(model, dataloaders=DataLoader( TensorDataset(new_feature, new_prop) , batch_size=args.batch_size)  ) #model.predict_step = val_tokens (Recover Dim)
             del new_feature 
             tokens = torch.cat(tokens)
-            print('Decoding tokens: ', tokens.size() )
 
         with timer(f'[{i_iter}] Generate String') :
             # get string
@@ -215,6 +199,7 @@ def optimize(args, initial_smi, obj_func = lambda docking, SA: -docking-0.5*SA*S
         valid_smi     = [ smi[idx] for idx in valid_mol ] #type(smi) = list
 
         with timer(f'[{i_iter}] Get Property') :
+            print(f'start docking program for valid mol: {len(valid_smi)}')
             valid_smiles, list_docking, list_SA, success_indices, valid_struct_id, failed_smiles = get_property_qvina(valid_smi, n_repeat = args.n_repeat_docking, csv_path = f'{args.csv_path}/tmp', num_smiles = valid_struct_id , target=args.target)
             print('failed docking program', len(valid_mol) - len(success_indices) )
 
@@ -318,7 +303,6 @@ if __name__=='__main__':
     if args.input_file.endswith('.csv'):
         initial_smi = pd.read_csv(args.input_file)['smiles'].tolist()
     else:
-        #initial_smi = [ line.strip() for line in open(args.input_file).readlines() ][:args.init_num]
         initial_smi = [ line.strip() for line in open(args.input_file).readlines() ]
     print('initial smi:\n',initial_smi)
     result = optimize(args, initial_smi)

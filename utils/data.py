@@ -13,27 +13,51 @@ from multiprocessing import Pool
 import numpy as np
 
 pad_id = 0 ; sos_id = 1 ; eos_id = 2 ; unk_id = 3
-
 class CustomDataset(Dataset):
-    def __init__(self, list_tokens, smi, masking_ratio=0.0):#pad=0, unk=3
-        super().__init__()
-        self.seq_len = max( [ len(tokens) for tokens in list_tokens])+2
-        self.masking_ratio = masking_ratio
-        self.smi = smi
-        with Pool(24) as p:
-            list_tokens = [ pad_or_truncate([sos_id] + tokens + [eos_id], self.seq_len) for tokens in list_tokens ]
-            self.data = torch.LongTensor(list_tokens)
-            self.prop = list (p.map (calculate_prop, self.smi) )
+    def __init__(self, list_tokens, masking_ratio=0.0):#pad=0, unk=3  
+        super().__init__()                                   
+        self.seq_len = max( [ len(tokens) for tokens in list_tokens])+2   
+        self.masking_ratio = masking_ratio                   
+        list_tokens = [ pad_or_truncate([sos_id] + tokens + [eos_id], self.seq_len) for tokens in list_tokens ]
+#        self.data = torch.LongTensor(list_tokens) 
+#        self.prop = np.loadtxt(filename, dtype=np.float32)  
 
-    def __getitem__(self, idx):
+        self.smi = open(filename).readlines()
+        with Pool(24) as p:                                  
+            list_tokens = ((tokens, self.seq_len) for tokens in list_tokens)
+            list_tokens = list( p.map (pad_or_truncate, list_tokens ) )
+            self.data = torch.LongTensor(list_tokens) 
+            self.prop = list (p.map (calculate_prop, self.smi) )
+            
+    def __getitem__(self, idx):                              
         src_data = self.data[idx].clone().detach()
         src_data[torch.rand(src_data.size(), device=src_data.device) < self.masking_ratio ] = unk_id
-        src_data[self.data[idx]==pad_id] = pad_id
-        prop = torch.tensor(self.prop[idx])
-        return src_data, self.data[idx], prop
-
+        src_data[self.data[idx]==pad_id] = pad_id            
+        prop = torch.tensor(self.prop[idx])                  
+        return src_data, self.data[idx], prop                
+        
     def __len__(self):
         return len(self.data)
+#class CustomDataset(Dataset):
+#    def __init__(self, list_tokens, smi, masking_ratio=0.0):#pad=0, unk=3
+#        super().__init__()
+#        self.seq_len = max( [ len(tokens) for tokens in list_tokens])+2
+#        self.masking_ratio = masking_ratio
+#        self.smi = smi
+#        with Pool(24) as p:
+#            list_tokens = [ pad_or_truncate([sos_id] + tokens + [eos_id], self.seq_len) for tokens in list_tokens ]
+#            self.data = torch.LongTensor(list_tokens)
+#            self.prop = list (p.map (calculate_prop, self.smi) )
+#
+#    def __getitem__(self, idx):
+#        src_data = self.data[idx].clone().detach()
+#        src_data[torch.rand(src_data.size(), device=src_data.device) < self.masking_ratio ] = unk_id
+#        src_data[self.data[idx]==pad_id] = pad_id
+#        prop = torch.tensor(self.prop[idx])
+#        return src_data, self.data[idx], prop
+#
+#    def __len__(self):
+#        return len(self.data)
 
 def pad_or_truncate(tokenized_text, seq_len):
     if len(tokenized_text) < seq_len:

@@ -32,12 +32,12 @@ def train(args):
     list_smi = open(args.filename).readlines() 
     list_tokens=[]
     for line in tqdm(list_smi, desc='loading data'):#list
+        print('1111', line)
         tmp_line = ( to_ais(line, args.sp_model) if args.tokenize_method == 'ais' 
                else " ".join(smiles_tokenizer(sf.encoder(line))) if args.tokenize_method=='selfies' 
                else " ".join(smiles_tokenizer(line))  )
         list_tokens.append( [ sp.Encode(token.strip())[0] for token in re.split("\s+", tmp_line.strip()) ] )
     train_dataset, valid_dataset = torch.utils.data.random_split(list_tokens, [ int(args.train_ratio*len(list_tokens)), len(list_tokens)-int(args.train_ratio*len(list_tokens)) ] )
-
     train_dataset = CustomDataset(train_dataset, [list_smi[idx] for idx in train_dataset.indices], args.masking_ratio)
     train_loader  = DataLoader(train_dataset, batch_size = args.batch_size,
                                pin_memory=True, num_workers=30, shuffle=True
